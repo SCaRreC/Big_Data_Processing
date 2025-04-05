@@ -6,3 +6,10 @@ lazy val root = (project in file("."))
   .settings(
     name := "BD_Processing_Practica"
   )
+libraryDependencies ++= Seq(
+
+  "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+  "org.apache.spark" %% "spark-core" % "3.2.4",
+  "org.apache.spark" %% "spark-sql" % "3.2.4"
+
+)
