@@ -77,5 +77,60 @@ class ExamenSaraTest extends FlatSpec with Matchers with TestInit {
     results(4).getAs[String]("par o impar") shouldBe "impar"
 
   }
+  "ejercicio3" should "Join two dataframes on Student id, and calculate the average grade per student" in {
+    // Testing data
+    val studentName = Seq(
+      (1, "María"),
+      (2, "José"),
+      (3, "Guillermo"),
+      (4, "Andrea"),
+      (5, "Alejandro"),
+      (6, "Martín")
+    ).toDF("id", "Name")
+    val grades = Seq(
+      (1, "Matemáticas", 8.5),
+      (1, "Física", 7.2),
+      (1, "Historia", 6.8),
+      (2, "Matemáticas", 9.1),
+      (2, "Química", 8.4),
+      (2, "Literatura", 7.5),
+      (2, "Biología", 6.9),
+      (3, "Física", 8.0),
+      (3, "Historia", 7.7),
+      (3, "Geografía", 6.5),
+      (4, "Matemáticas", 7.8),
+      (4, "Química", 8.2),
+      (4, "Biología", 7.1),
+      (4, "Literatura", 6.9),
+      (4, "Filosofía", 9.0),
+      (5, "Historia", 8.5),
+      (5, "Geografía", 7.3),
+      (5, "Economía", 6.8),
+      (5, "Arte", 9.2),
+      (6, "Matemáticas", 9.5),
+      (6, "Física", 8.8),
+      (6, "Programación", 9.7)
+    ).toDF("id_estudiante", "asignatura", "calificacion")
 
+    //Ejecucion
+    val result = ejercicio3(studentName, grades)
+    val esperado = Seq(
+      (1, "María", 7.5),
+      (2, "José", 7.975),
+      (3, "Guillermo", 7.4),
+      (4, "Andrea", 7.8),
+      (5, "Alejandro", 7.95),
+      (6, "Martín", 9.33)
+    ).toDF("id", "Name", "nota_media")
+
+    val res = result.collect().sortBy(_.getInt(0))
+    val exp = esperado.collect().sortBy(_.getInt(0))
+
+    res.zip(exp).foreach { case (r, e) =>
+      r.getInt(0) shouldBe e.getInt(0)
+      r.getString(1) shouldBe e.getString(1)
+      math.abs(r.getDouble(2) - e.getDouble(2)) should be < 0.01
+    }
+
+  }
 }
