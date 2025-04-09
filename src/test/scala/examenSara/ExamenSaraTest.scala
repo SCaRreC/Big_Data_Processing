@@ -133,4 +133,34 @@ class ExamenSaraTest extends FlatSpec with Matchers with TestInit {
     }
 
   }
+  "ejercicio4" should "count the occurrences of each word in an RDD" in {
+
+    // Lista de palabras de ejemplo
+    val palabras = List("gato", "perro", "gato", "pez", "perro", "perro", "loro")
+
+    // Llamada a la función
+    val resultado = ejercicio4(palabras)(spark)
+
+    // Resultado esperado
+    val esperado = Map(
+      "gato" -> 2,
+      "perro" -> 3,
+      "pez" -> 1,
+      "loro" -> 1
+    )
+
+    // Comparación de los resultados, convirtiendo el RDD a Map
+    resultado.collect().toMap shouldBe esperado
+  }
+
+  "ejercicio4" should "return empty RDD for empty input" in {
+    // Given
+    val emptyList = List.empty[String]
+
+    // When
+    val result = ejercicio4(emptyList)(spark)
+
+    // Then
+    result.count() shouldBe 0
+  }
 }

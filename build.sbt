@@ -6,6 +6,11 @@ lazy val root = (project in file("."))
   .settings(
     name := "BD_Processing_Practica"
   )
+javaOptions ++= Seq(
+  "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED",
+  "--add-opens=java.base/java.nio=ALL-UNNAMED"
+)
+
 libraryDependencies ++= Seq(
 
   "org.scalatest" %% "scalatest" % "3.0.8" % Test,
