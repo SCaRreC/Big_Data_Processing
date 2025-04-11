@@ -1,7 +1,7 @@
 package examenSara
 
 import examenSara.ExamenSara._
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.types._
 import org.scalatest.{FlatSpec, Matchers}
 import utils.TestInit
@@ -162,5 +162,47 @@ class ExamenSaraTest extends FlatSpec with Matchers with TestInit {
 
     // Then
     result.count() shouldBe 0
+  }
+  "ejercicio5" should "calculate the total income per product" in {
+    val dfVentas:DataFrame = spark.read
+      .option("header", "true")
+      .csv("/Users/saracarcamo/Documents/KeepCoding/Practicas/BD_Proc/BD_Processing_Practica/.idea/csv/ventas.csv")
+
+    val result = ejercicio5(dfVentas)(spark)
+    // Cuando
+    result.schema.fields.map(_.name) should contain allOf ("id_venta", "id_producto", "cantidad", "precio_unitario", "ingreso_total")
+
+    // Entonces, verificar algunos valores
+    val check = result.collect()
+
+    // Por ejemplo, verificar el primer valor
+    check(0).getAs[Double]("ingreso_total") shouldBe check(0).getAs[Int]("cantidad") * check(0).getAs[Double]("precio_unitario")
+  }
+
+  "ejercicio5" should "Load file ventas.csv with certain headers and apply a calculation" in {
+    val dfVentasTest = Seq(
+      (1, 101, 2, 10.5),  // ingreso = 2 * 10.5 = 21.0
+      (2, 102, 1, 20.0),  // ingreso = 1 * 20.0 = 20.0
+      (3, 103, 3, 5.0)    // ingreso = 3 * 5.0 = 15.0
+    ).toDF("id_venta", "id_producto", "cantidad", "precio_unitario")
+
+    val resultado = ejercicio5(dfVentasTest)(spark)
+
+    val esperado = Seq(
+      (1, 101, 2, 10.5, 21.0),
+      (2, 102, 1, 20.0, 20.0),
+      (3, 103, 3, 5.0, 15.0)
+    ).toDF("id_venta", "id_producto", "cantidad", "precio_unitario", "ingreso_total")
+
+    val res = resultado.collect()
+    val exp = esperado.collect()
+
+    res.zip(exp).foreach { case (r, e) =>
+      r.getInt(0) shouldBe e.getInt(0) // id_venta
+      r.getInt(1) shouldBe e.getInt(1) // id_producto
+      r.getInt(2) shouldBe e.getInt(2) // cantidad
+      r.getDouble(3) shouldBe e.getDouble(3) // precio_unitario
+      math.abs(r.getDouble(4) - e.getDouble(4)) should be < 0.01 // ingreso_total
+    }
   }
 }

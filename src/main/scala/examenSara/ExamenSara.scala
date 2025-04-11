@@ -1,6 +1,5 @@
 package examenSara
 
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -19,9 +18,9 @@ object ExamenSara {
    */
 
   def ejercicio1(students:DataFrame)(implicit spark:SparkSession): DataFrame = {
-    //Mostrar el esquema del df.
+    // Muestra el esquema del df.
     students.printSchema()
-    // Filtrar calificacion > 8, seleccionar nombres y ordenar descendente
+    // Filtra calificaciones > 8, selecciona nombres y ordena descendente
 
     val resStudents = students
       .filter(col("grade") > 8)
@@ -35,13 +34,13 @@ object ExamenSara {
    * Aplica esta función a una columna de un DataFrame que contenga una lista de números.
    */
   def ejercicio2(numeros: DataFrame, columnName: String)(spark: SparkSession): DataFrame = { // Quise añadirle la variable para el nombre de la columna
-    // Funcion que mira a cada valor y determina si es par o impar
+    // Función que mira a cada valor y determina si es par o impar
     val parOImpar = udf((num:Int) => num % 2 match {
       case 0 => "par"
       case _ => "impar"
     })
 
-    // Le pasan una columna de un DF con una lista de numeros
+    // Le pasan una columna de un DF con una lista de números
     val dfPoI = numeros.withColumn("par o impar", parOImpar(col(columnName)))
 
     dfPoI
@@ -92,7 +91,18 @@ object ExamenSara {
    * ventas (id_venta, id_producto, cantidad, precio_unitario)
    * y calcula el ingreso total (cantidad * precio_unitario) por producto.
    */
-  //def ejercicio5(ventas: DataFrame)(spark: SparkSession): DataFrame = {
+  def ejercicio5(ventas: DataFrame)(spark: SparkSession): DataFrame = {
+
+    // Asegurarse de que las columnas de cantidad y precio_unitario sean del tipo correcto
+    val dfVentasTyped = ventas
+      .withColumn("cantidad", col("cantidad").cast("int")) // Convertir a tipo Integer
+      .withColumn("precio_unitario", col("precio_unitario").cast("double")) // Convertir a tipo Double
+
+    // Calcular el ingreso total
+    val dfVentasConIngreso = dfVentasTyped.withColumn("ingreso_total", col("cantidad") * col("precio_unitario"))
+
+    dfVentasConIngreso
+  }
 
 
 
