@@ -17,46 +17,49 @@ object ExamenSara {
    Selecciona los nombres de los estudiantes y ordénalos por calificación de forma descendente.
    */
 
-  def ejercicio1(students:DataFrame)(implicit spark:SparkSession): DataFrame = {
-    // Muestra el esquema del df.
-    students.printSchema()
-    // Filtra calificaciones > 8, selecciona nombres y ordena descendente
+  def ejercicio1(alumnos:DataFrame)(implicit spark:SparkSession): DataFrame = {
+    // Muestra el esquema del DF
+    alumnos.printSchema()
 
-    val resStudents = students
+    // Filtra y ordena en descendente los alumnos con calificaciones > 8.
+
+    val resStudents = alumnos
       .filter(col("grade") > 8)
       .select("name", "grade")
       .orderBy(desc("grade"))
 
     resStudents
   }
+
   /** Ejercicio 2: UDF (User Defined Function)
    * Pregunta: Define una función que determine si un número es par o impar.
    * Aplica esta función a una columna de un DataFrame que contenga una lista de números.
    */
-  def ejercicio2(numeros: DataFrame, columnName: String)(spark: SparkSession): DataFrame = { // Quise añadirle la variable para el nombre de la columna
-    // Función que mira a cada valor y determina si es par o impar
+
+  def ejercicio2(numeros: DataFrame, columnName: String)(spark: SparkSession): DataFrame = { // Añado la variable para el nombre de la columna
+    // Determina si cada número es par o impar
     val parOImpar = udf((num:Int) => num % 2 match {
       case 0 => "par"
       case _ => "impar"
     })
 
-    // Le pasan una columna de un DF con una lista de números
+    // Crea nueva columna de par o impar a partir de una columna determinada.
     val dfPoI = numeros.withColumn("par o impar", parOImpar(col(columnName)))
 
     dfPoI
   }
+
   /** Ejercicio 3: Joins y agregaciones
    * Pregunta: Dado dos DataFrames,
    * uno con información de estudiantes (id, nombre)
    * y otro con calificaciones (id_estudiante, asignatura, calificacion),
    * realiza un join entre ellos y calcula el promedio de calificaciones por estudiante.
    */
+
   def ejercicio3(estudiantes: DataFrame, calificaciones: DataFrame)(implicit spark:SparkSession): DataFrame = {
-    import spark.implicits._
 
     //join entre los dos dataFrames en el id del alumno
     spark.conf.set("spark.sql.shuffle.partitions", "8")
-
     val dfJoined = estudiantes
       .join(calificaciones, estudiantes("id") === calificaciones("id_estudiante"), "left_outer")
       .select(
@@ -64,7 +67,7 @@ object ExamenSara {
         estudiantes("Name"),
         calificaciones("calificacion"))
 
-    //agrupar por student_id y calcular la media de notas
+    //agrupa por student_id y calcula la media de notas
     val StudentGrades = dfJoined
       .groupBy("id", "Name")
       .agg(round(avg("calificacion"), 2).as("nota_media"))
@@ -72,15 +75,19 @@ object ExamenSara {
     StudentGrades
 
   }
+
   /** Ejercicio 4: Uso de RDDs
    * Pregunta: Crea un RDD a partir de una lista de palabras y cuenta la cantidad de ocurrencias de cada palabra.
    *
    */
 
   def ejercicio4(palabras: List[String])(spark: SparkSession): RDD[(String, Int)] = {
+
+    //Convierte una lista en RDD
     val rddPalabras = spark.sparkContext.parallelize(palabras)
-    //count how many times each word appear
+    //Crea tuplas de cada palabra y un 1
     val tuplasPalabras: RDD[(String, Int)] = rddPalabras.map(palabra => (palabra, 1))
+    //Suma los valures de las tuplas con la misma palabra
     val conteo: RDD[(String, Int)] = tuplasPalabras.reduceByKey(_ + _)
     conteo
   }
@@ -93,18 +100,14 @@ object ExamenSara {
    */
   def ejercicio5(ventas: DataFrame)(spark: SparkSession): DataFrame = {
 
-    // Asegurarse de que las columnas de cantidad y precio_unitario sean del tipo correcto
+    // Cast de columnas para que tengas el tipo correcto
     val dfVentasTyped = ventas
-      .withColumn("cantidad", col("cantidad").cast("int")) // Convertir a tipo Integer
-      .withColumn("precio_unitario", col("precio_unitario").cast("double")) // Convertir a tipo Double
+      .withColumn("cantidad", col("cantidad").cast("int"))
+      .withColumn("precio_unitario", col("precio_unitario").cast("double"))
 
-    // Calcular el ingreso total
+    // Calcula el ingreso total en nueva columna "precio_unitario"
     val dfVentasConIngreso = dfVentasTyped.withColumn("ingreso_total", col("cantidad") * col("precio_unitario"))
 
     dfVentasConIngreso
   }
-
-
-
-
 }

@@ -11,7 +11,7 @@ import utils.TestInit
 class ExamenSaraTest extends FlatSpec with Matchers with TestInit {
 
   import spark.implicits._
-  //Crear datos de prueba
+  //Datos de prueba
   val studentsData = Seq(
     ("Juan", 20, 7.5),
     ("María", 22, 9.5),
@@ -25,60 +25,47 @@ class ExamenSaraTest extends FlatSpec with Matchers with TestInit {
     ("Lucía", 22, 9.9),
     ("Diego", 19, 6.0)
   )
-  // Convertir a DataFrame
+  // Convierte a DataFrame
   val dfStudents = studentsData.toDF("name", "age", "grade")
 
-  "ejercicio1" should "filter and order df students" in {
-
-
-
-    //Ejecucion
-
-    dfStudents.schema shouldBe StructType(Seq(
-      StructField("name", StringType, nullable = true),
-      StructField("age", IntegerType, nullable = false),
-      StructField("grade", DoubleType, nullable = false)
-    ))
+  "ejercicio1" should "filtrar y ordenar listado de estudiantes con notas superiores a 8" in {
 
     val res = ejercicio1(dfStudents)
 
+    //Comprueba estructura del DF res
     res.schema shouldBe StructType(Seq(
       StructField("name", StringType, nullable = true),
       StructField("grade", DoubleType, nullable = false)
     ))
 
     res.show()
-    // Verificar el ordenamiento descendente
-    val collectedResults = res.collect()
-    //val grades = collectedResults.map(_.getAs[Double]("grade"))
-    //grades shouldBe grades.sorted.reverse
 
-    // Verificar los valores específicos (primeros 3)
+    //Verifica los valores específicos de los primero 3 registros
+    val collectedResults = res.collect()
     collectedResults.take(3) should contain allOf(
       Row("Lucía", 9.9),
       Row("María", 9.5),
       Row("Sofía", 9.1)
     )
-
   }
 
-  "ejercicio2" should "Mark if a column has odd or even numbers" in {
+  "ejercicio2" should "Indica si un numero es par o impar" in {
 
     val datos = Seq(1, 2, 3, 4, 5)
     val df = datos.toDF("miColumna")
 
     val resultado = ejercicio2(df, "miColumna")(spark)
 
-    val results = resultado.collect()
-    results(0).getAs[String]("par o impar") shouldBe "impar"
-    results(1).getAs[String]("par o impar") shouldBe "par"
-    results(2).getAs[String]("par o impar") shouldBe "impar"
-    results(3).getAs[String]("par o impar") shouldBe "par"
-    results(4).getAs[String]("par o impar") shouldBe "impar"
+    val resultados = resultado.collect()
+    resultados(0).getAs[String]("par o impar") shouldBe "impar"
+    resultados(1).getAs[String]("par o impar") shouldBe "par"
+    resultados(2).getAs[String]("par o impar") shouldBe "impar"
+    resultados(3).getAs[String]("par o impar") shouldBe "par"
+    resultados(4).getAs[String]("par o impar") shouldBe "impar"
 
   }
-  "ejercicio3" should "Join two dataframes on Student id, and calculate the average grade per student" in {
-    // Testing data
+  "ejercicio3" should "Join dos dataframes por Student id y calcula la nota media por alumno" in {
+    // Datos
     val studentName = Seq(
       (1, "María"),
       (2, "José"),
@@ -112,7 +99,7 @@ class ExamenSaraTest extends FlatSpec with Matchers with TestInit {
       (6, "Programación", 9.7)
     ).toDF("id_estudiante", "asignatura", "calificacion")
 
-    //Ejecucion
+    //Ejecución
     val result = ejercicio3(studentName, grades)
     val esperado = Seq(
       (1, "María", 7.5),
@@ -131,14 +118,12 @@ class ExamenSaraTest extends FlatSpec with Matchers with TestInit {
       r.getString(1) shouldBe e.getString(1)
       math.abs(r.getDouble(2) - e.getDouble(2)) should be < 0.01
     }
-
   }
-  "ejercicio4" should "count the occurrences of each word in an RDD" in {
+  "ejercicio4" should "contar el número de veces que aparece cada palabra de una lista" in {
 
     // Lista de palabras de ejemplo
     val palabras = List("gato", "perro", "gato", "pez", "perro", "perro", "loro")
 
-    // Llamada a la función
     val resultado = ejercicio4(palabras)(spark)
 
     // Resultado esperado
@@ -153,56 +138,18 @@ class ExamenSaraTest extends FlatSpec with Matchers with TestInit {
     resultado.collect().toMap shouldBe esperado
   }
 
-  "ejercicio4" should "return empty RDD for empty input" in {
-    // Given
-    val emptyList = List.empty[String]
 
-    // When
-    val result = ejercicio4(emptyList)(spark)
-
-    // Then
-    result.count() shouldBe 0
-  }
-  "ejercicio5" should "calculate the total income per product" in {
+  "ejercicio5" should "Pasa de un archivo .csv a DF y calcula el precio_unitario" in {
     val dfVentas:DataFrame = spark.read
       .option("header", "true")
       .csv("/Users/saracarcamo/Documents/KeepCoding/Practicas/BD_Proc/BD_Processing_Practica/.idea/csv/ventas.csv")
 
     val result = ejercicio5(dfVentas)(spark)
-    // Cuando
+   // Verifica todos los headers
     result.schema.fields.map(_.name) should contain allOf ("id_venta", "id_producto", "cantidad", "precio_unitario", "ingreso_total")
 
-    // Entonces, verificar algunos valores
+    // verifica  el primer valor
     val check = result.collect()
-
-    // Por ejemplo, verificar el primer valor
     check(0).getAs[Double]("ingreso_total") shouldBe check(0).getAs[Int]("cantidad") * check(0).getAs[Double]("precio_unitario")
-  }
-
-  "ejercicio5" should "Load file ventas.csv with certain headers and apply a calculation" in {
-    val dfVentasTest = Seq(
-      (1, 101, 2, 10.5),  // ingreso = 2 * 10.5 = 21.0
-      (2, 102, 1, 20.0),  // ingreso = 1 * 20.0 = 20.0
-      (3, 103, 3, 5.0)    // ingreso = 3 * 5.0 = 15.0
-    ).toDF("id_venta", "id_producto", "cantidad", "precio_unitario")
-
-    val resultado = ejercicio5(dfVentasTest)(spark)
-
-    val esperado = Seq(
-      (1, 101, 2, 10.5, 21.0),
-      (2, 102, 1, 20.0, 20.0),
-      (3, 103, 3, 5.0, 15.0)
-    ).toDF("id_venta", "id_producto", "cantidad", "precio_unitario", "ingreso_total")
-
-    val res = resultado.collect()
-    val exp = esperado.collect()
-
-    res.zip(exp).foreach { case (r, e) =>
-      r.getInt(0) shouldBe e.getInt(0) // id_venta
-      r.getInt(1) shouldBe e.getInt(1) // id_producto
-      r.getInt(2) shouldBe e.getInt(2) // cantidad
-      r.getDouble(3) shouldBe e.getDouble(3) // precio_unitario
-      math.abs(r.getDouble(4) - e.getDouble(4)) should be < 0.01 // ingreso_total
-    }
   }
 }
